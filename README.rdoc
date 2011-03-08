@@ -1,0 +1,34 @@
+= Discas::RentalHistory
+
+Discas::RentalHistoryは、ローカルに保存したDVDレンタルサービスのDISCASの
+レンタル履歴ページから履歴データを抽出するツールです。DISCASのサイトに
+自動アクセスして履歴データを取得することは、このツールではできません。
+
+= 使い方
+
+以下の手順を行います。
+
+1. DISCASのサイトにログインし、その履歴ページをローカルの任意のディレクトリに保存します。
+   履歴ページが複数になるときはすべてのページを同じディレクトリに保存します。
+   保存の際のファイル名はデフォルトのrentalLog.do.htmlのままで問題ありません。
+   （変更する場合は、最初のファイルを番号なし、2番目以降は拡張子の前にその連続番号を振ります。
+   　例: rent.html, rent2.html, rent3.html..）
+
+2. 以下を実行します。
+     require 'discas'
+
+     discas = Discas::Rentalhistory.new('/path/to/the/rentalLog.do.html')
+     discas.read(5)
+     puts discas.rentals
+     discas.write('rentals.csv')
+
+- newメソッドの引数には、先頭のファイルパスを指定します。
+- readメソッドの引数には、対象のファイル数を指定します。
+- rentalsメソッドはreadで抽出したレンタル履歴データを配列で返します。
+- writeメソッドの引数には、抽出した結果を保存するファイル名を指定します。
+
+
+== Copyright
+
+Copyright (c) 2011 Kyo Endo <http://d.hatena.ne.jp/keyesberry> released under the MIT license.
+
