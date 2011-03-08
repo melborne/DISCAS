@@ -6,7 +6,7 @@ end
 
 if __FILE__ == $0
   discas = Discas::RentalHistory.new("/path/to/rentalLog.do.html", )
-  if discas.read(10)
+  if discas.read(1..3)
     puts "Successfully read"
   end
   if discas.write('rentals.csv')

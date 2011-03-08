@@ -9,14 +9,15 @@ module Discas
       @rentals = []
     end
 
-    def read(last_page=1, sortable=true)
-      (1..last_page).each do |i|
+    def read(pages=nil, sortable=true)
+      @rentals.clear
+      build_range(pages).each do |i|
         open(@path[i]) do |f|
           html = Nokogiri::HTML(f)
           scrape_record(html, sortable)
         end
       end
-      true
+      self
     rescue => e
       STDERR.puts "File read error!: #{e}"
     end
@@ -26,12 +27,21 @@ module Discas
         f.puts header if header
         rentals.each { |re| f.puts re.join(sep) }
       end
-      true
+      self
     rescue => e
-      STDERR.puts 'File write error!: #{e}'
+      STDERR.puts "File write error!: #{e}"
     end
 
     private
+    def build_range(pages)
+      case pages
+      when Integer then (1..pages)
+      when Range   then pages
+      when nil     then (1..1)
+      else raise ArgumentError, "Argument type is wrong!"
+      end
+    end
+
     def path(path)
       dir, base, ext = File.dirname(path), File.basename(path, '.*'), File.extname(path)
       ->n{ n = nil if n==1; File.join(dir, "#{base}#{n}#{ext}") }
@@ -44,11 +54,11 @@ module Discas
           case
           when [1,2,3,5].include?(i) # sent-date, return-date, status, plan fields
             record << td.text.gsub(/\t|\n/, '')
-          when i == 4             # title field
+          when i == 4                # title field
             media = td.at("img").attr('title')
-            data = td.at("a").text
+            title = sortable ? add_zero_to_1_to_9(td.at("a").text) : td.at("a").text
             url = td.at("a").attr('href')
-            record << media << data << url
+            record << media << title << url
           end
         end
         @rentals << record unless record.empty?
