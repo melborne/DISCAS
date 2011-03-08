@@ -21,7 +21,7 @@ module Discas
       STDERR.puts "File read error!: #{e}"
     end
 
-    def write(f, header="発送日,返却日,メディア,タイトル", sep=',')
+    def write(f, header=HEADER(), sep=',')
       open(f, 'w') do |f|
         f.puts header if header
         rentals.each { |re| f.puts re.join(sep) }
@@ -37,18 +37,18 @@ module Discas
       ->n{ n = nil if n==1; File.join(dir, "#{base}#{n}#{ext}") }
     end
 
-    # extract sent-date, return-date, media, title
     def scrape_record(html, sortable)
       html.search(BASE_TR()).each do |tr|
         record = []
         tr.search("td").each_with_index do |td, i|
-          if [1,2,4].include?(i)
-            data = td.text.gsub(/\t|\n/, '')
-            if i == 4
-              data = add_zero_to_1_to_9(data) if sortable
-              record << td.at("img").attr('title')
-            end
-            record << data
+          case
+          when [1,2,3,5].include?(i) # sent-date, return-date, status, plan fields
+            record << td.text.gsub(/\t|\n/, '')
+          when i == 4             # title field
+            media = td.at("img").attr('title')
+            data = td.at("a").text
+            url = td.at("a").attr('href')
+            record << media << data << url
           end
         end
         @rentals << record unless record.empty?
@@ -57,6 +57,10 @@ module Discas
 
     def BASE_TR
       "table.ppdis00185Tbl03[summary='これまでにご利用頂いたDVD/CD'] tr"
+    end
+
+    def HEADER
+      "発送日,返却日,ステータス,メディア,タイトル,URL,プラン"
     end
 
     # to be series sortable, append zero to 1-9
